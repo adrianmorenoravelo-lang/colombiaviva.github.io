@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -77,8 +78,9 @@
         // ==========================================================
         // CONFIGURACIÓN DE LA API Y FUNCIONES DE ASISTENCIA
         // ==========================================================
-        const API_KEY = "AIzaSyD0wSUOzA4gjPDutABZZx-FFLfuCxTPfCY"; 
-        const LLM_MODEL = "gemini-2.5-flash-preview-05-20"; 
+        // Se deja vacío para que el entorno Canvas inyecte la clave API de forma segura.
+        const API_KEY = ""; 
+        const LLM_MODEL = "gemini-2.5-flash-preview-09-2025"; // Actualizado al modelo más reciente.
         const MAX_RETRIES = 3;
         const RETRY_DELAY_MS = 1000; // 1 second
 
@@ -172,11 +174,6 @@
             const generateButton = document.getElementById('generateRouteButton');
             const interest = interestInput.value.trim();
 
-            if (API_KEY === "") {
-                resultsDiv.innerHTML = `<p class="text-colombia-red font-semibold">ERROR: Por favor, **inserta tu clave de API** en el código JavaScript (variable API_KEY).</p>`;
-                return;
-            }
-
             if (!interest) {
                 resultsDiv.innerHTML = `<p class="text-colombia-red font-semibold">Por favor, ingresa un interés cultural (ej. Café, Cumbia, Artesanía, Gabo).</p>`;
                 return;
@@ -222,12 +219,12 @@
                 // Mostrar error de la API o de la red
                 resultsDiv.innerHTML = `<div class="p-4 bg-white rounded-lg shadow-inner border-2 border-colombia-red/50 text-colombia-red font-semibold">
                     <p>Error de Generación: ${error.message}</p>
-                    <p class="mt-2 text-sm text-gray-700">Asegúrate de que el prompt no sea sensible o inapropiado, y que tu clave de API esté configurada correctamente.</p>
+                    <p class="mt-2 text-sm text-gray-700">Asegúrate de que el prompt no sea sensible o inapropiado, y que la clave API esté siendo inyectada correctamente por el entorno.</p>
                 </div>`;
                 console.error("Error en handleGenerateRoute (API):", error);
             } finally {
-                generateButton.disabled = false;
-                generateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                generateRouteButton.disabled = false;
+                generateRouteButton.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
         
@@ -318,9 +315,15 @@
             // Actualizar la etiqueta del modo en el hero (API Activa)
             const modeTag = document.getElementById('modeTag');
             if (modeTag) {
-                modeTag.textContent = API_KEY ? 'MODO API REAL ACTIVO' : 'MODO CLAVE DE API FALTANTE';
-                modeTag.classList.remove('font-light', 'text-colombia-yellow');
-                modeTag.classList.add('font-bold', API_KEY ? 'text-colombia-yellow' : 'text-colombia-red');
+                // 1. Definir el texto base (solicitud del usuario: quitar sufijo)
+                const baseText = 'POTENCIADO POR GEMINI (GOOGLE)';
+                
+                // 2. Aplicar el nuevo texto (sin sufijo de estado de clave)
+                modeTag.textContent = baseText;
+                
+                // 3. Aplicar estilos estáticos (solicitud del usuario: color BLANCO)
+                modeTag.classList.remove('font-light', 'text-colombia-yellow', 'text-colombia-red');
+                modeTag.classList.add('font-bold', 'text-white');
             }
             
             // Inicializar el panel de enfoque
@@ -354,9 +357,9 @@
                 <h2 class="text-5xl sm:text-7xl font-black mb-4 leading-tight">
                     Tu Pasaporte Digital a la <span class="text-colombia-yellow">Cultura Colombiana</span>
                 </h2>
-                <!-- Etiqueta de Modo Actualizada Dinámicamente -->
+                <!-- Etiqueta de Modo Actualizada Dinámicamente con el nuevo texto -->
                 <p id="modeTag" class="text-xl sm:text-2xl mb-8 font-light max-w-3xl mx-auto">
-                    Impulsado por la inteligencia artificial de Google (Gemini)
+                    <!-- El JS inyectará "POTENCIADO POR GEMINI (GOOGLE)" en blanco -->
                 </p>
                 <div class="space-x-4">
                     <a href="#ruta-ia" class="bg-colombia-yellow text-colombia-blue px-8 py-4 text-lg font-bold rounded-full hover:bg-white transition duration-300 shadow-2xl inline-block transform hover:scale-105">
