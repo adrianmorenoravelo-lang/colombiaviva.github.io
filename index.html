@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -78,8 +77,14 @@
         // ==========================================================
         // CONFIGURACIÓN DE LA API Y FUNCIONES DE ASISTENCIA
         // ==========================================================
+        
         // Se deja vacío para que el entorno Canvas inyecte la clave API de forma segura.
-        const API_KEY = ""; 
+        // 
+        // ⚠️ ATENCIÓN: Si ejecutas esta aplicación fuera de Google Canvas (ej. GitHub Pages), 
+        // debes obtener una clave de la API de Gemini y PEGARLA DENTRO de estas comillas 
+        // para evitar el error 403 (Permission Denied).
+        const API_KEY = ""; // <-- ¡PEGA TU CLAVE AQUÍ PARA DESPLIEGUES EXTERNOS!
+        
         const LLM_MODEL = "gemini-2.5-flash-preview-09-2025"; // Actualizado al modelo más reciente.
         const MAX_RETRIES = 3;
         const RETRY_DELAY_MS = 1000; // 1 second
@@ -219,7 +224,7 @@
                 // Mostrar error de la API o de la red
                 resultsDiv.innerHTML = `<div class="p-4 bg-white rounded-lg shadow-inner border-2 border-colombia-red/50 text-colombia-red font-semibold">
                     <p>Error de Generación: ${error.message}</p>
-                    <p class="mt-2 text-sm text-gray-700">Asegúrate de que el prompt no sea sensible o inapropiado, y que la clave API esté siendo inyectada correctamente por el entorno.</p>
+                    <p class="mt-2 text-sm text-gray-700">Asegúrate de haber PEGADO tu clave API de Gemini en la sección &lt;script&gt; si estás fuera de Google Canvas.</p>
                 </div>`;
                 console.error("Error en handleGenerateRoute (API):", error);
             } finally {
@@ -318,7 +323,7 @@
                 // 1. Definir el texto base (solicitud del usuario: quitar sufijo)
                 const baseText = 'POTENCIADO POR GEMINI (GOOGLE)';
                 
-                // 2. Aplicar el nuevo texto (sin sufijo de estado de clave)
+                // 2. Aplicar el nuevo texto (sin sufijo de estado de clave de API)
                 modeTag.textContent = baseText;
                 
                 // 3. Aplicar estilos estáticos (solicitud del usuario: color BLANCO)
@@ -559,4 +564,5 @@
     </footer>
 
 </body>
+</html>
 </html>
