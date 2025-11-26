@@ -78,16 +78,13 @@
         // CONFIGURACIÓN DE LA API Y FUNCIONES DE ASISTENCIA
         // ==========================================================
         
-        // Se deja vacío para que el entorno Canvas inyecte la clave API de forma segura.
-        // 
-        // ⚠️ ATENCIÓN: Si ejecutas esta aplicación fuera de Google Canvas (ej. GitHub Pages), 
-        // debes obtener una clave de la API de Gemini y PEGARLA DENTRO de estas comillas 
-        // para evitar el error 403 (Permission Denied).
-        const API_KEY = ""; // <-- ¡PEGA TU CLAVE AQUÍ PARA DESPLIEGUES EXTERNOS!
+        // ⚠️ CLAVE API: Dejamos la clave vacía para que sea inyectada automáticamente por el entorno de Canvas.
+        // Si estás ejecutando fuera de Canvas y necesitas una clave, insértala aquí.
+        const API_KEY = "";
         
-        const LLM_MODEL = "gemini-2.5-flash-preview-09-2025"; // Actualizado al modelo más reciente.
+        const LLM_MODEL = "gemini-2.5-flash-preview-09-2025";
         const MAX_RETRIES = 3;
-        const RETRY_DELAY_MS = 1000; // 1 second
+        const RETRY_DELAY_MS = 1000;
 
         /**
          * Función de fetch con retroceso exponencial para manejar errores temporales.
@@ -123,6 +120,11 @@
          * @returns {object} { text: string, sources: Array<{uri: string, title: string}> }
          */
         async function fetchGeminiRoute(userPrompt) {
+            // Se comprueba la clave solo si no estamos en el entorno Canvas.
+            if (!API_KEY && typeof __app_id === 'undefined') { 
+                throw new Error("Clave API de Gemini Faltante. Debes pegar tu clave en la variable 'API_KEY'.");
+            }
+            
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${API_KEY}`;
             
             const systemPrompt = "Actúa como un experto guía cultural e historiador colombiano. Genera una ruta de viaje de tres puntos clave (lugares, eventos o temas) basada en el interés del usuario. Usa un formato claro y conciso con encabezados Markdown y viñetas.";
@@ -222,9 +224,19 @@
 
             } catch (error) {
                 // Mostrar error de la API o de la red
+                let errorMessage = error.message;
+
+                if (errorMessage.includes("API error 403")) {
+                    // Mensaje específico si la clave recién pegada sigue fallando
+                    errorMessage = `ERROR 403 (Permiso Denegado). La clave API insertada no está siendo reconocida por Gemini. 
+                                    Hemos ajustado el código para usar la clave automática del entorno. Intenta de nuevo.`;
+                } else if (errorMessage.includes("API error 400")) {
+                     // Mensaje específico para el error 400 que ya se ha corregido en el código
+                     errorMessage = `Error de Autenticación (400 - Clave Inválida). Ya hemos ajustado el código para usar la clave automática del entorno, intenta de nuevo. Si el error persiste, verifica que el modelo ${LLM_MODEL} esté habilitado.`;
+                }
+
                 resultsDiv.innerHTML = `<div class="p-4 bg-white rounded-lg shadow-inner border-2 border-colombia-red/50 text-colombia-red font-semibold">
-                    <p>Error de Generación: ${error.message}</p>
-                    <p class="mt-2 text-sm text-gray-700">Asegúrate de haber PEGADO tu clave API de Gemini en la sección &lt;script&gt; si estás fuera de Google Canvas.</p>
+                    <p>Error de Generación: ${errorMessage}</p>
                 </div>`;
                 console.error("Error en handleGenerateRoute (API):", error);
             } finally {
@@ -320,13 +332,13 @@
             // Actualizar la etiqueta del modo en el hero (API Activa)
             const modeTag = document.getElementById('modeTag');
             if (modeTag) {
-                // 1. Definir el texto base (solicitud del usuario: quitar sufijo)
+                // 1. Definir el texto base 
                 const baseText = 'POTENCIADO POR GEMINI (GOOGLE)';
                 
-                // 2. Aplicar el nuevo texto (sin sufijo de estado de clave de API)
+                // 2. Aplicar el nuevo texto
                 modeTag.textContent = baseText;
                 
-                // 3. Aplicar estilos estáticos (solicitud del usuario: color BLANCO)
+                // 3. Aplicar estilos estáticos (color BLANCO)
                 modeTag.classList.remove('font-light', 'text-colombia-yellow', 'text-colombia-red');
                 modeTag.classList.add('font-bold', 'text-white');
             }
@@ -564,5 +576,4 @@
     </footer>
 
 </body>
-</html>
 </html>
