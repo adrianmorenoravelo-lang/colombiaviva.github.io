@@ -44,17 +44,6 @@
             border: 3px solid #FFD700;
             box-shadow: 0 0 0 3px #0033A0;
         }
-        .citation {
-            font-size: 0.75rem;
-            color: #4B5563;
-            margin-top: 1rem;
-            padding-top: 0.5rem;
-            border-top: 1px dashed #D1D5DB;
-        }
-        .citation a {
-            color: #0033A0;
-            text-decoration: underline;
-        }
         /* Estilo para el spinner de carga */
         .loader {
             border: 4px solid #f3f3f3;
@@ -72,99 +61,74 @@
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
 
-    <!-- JavaScript para la API y la interfaz -->
+    <!-- JavaScript para la simulación local de la interfaz -->
     <script type="module">
         // ==========================================================
-        // CONFIGURACIÓN DE LA API Y FUNCIONES DE ASISTENCIA
+        // CONFIGURACIÓN LOCA (SIN API)
         // ==========================================================
         
-        // ⚠️ CLAVE API: Dejamos la clave vacía para que sea inyectada automáticamente por el entorno de Canvas.
-        // Si estás ejecutando fuera de Canvas y necesitas una clave, insértala aquí.
-        const API_KEY = "AIzaSyAf5AfhagfWPXHONyhjUUoJDQTesSM-a48";
-        
-        const LLM_MODEL = "gemini-2.5-flash-preview-09-2025";
-        const MAX_RETRIES = 3;
-        const RETRY_DELAY_MS = 1000;
+        // La generación de contenido ahora es simulada con datos codificados.
 
         /**
-         * Función de fetch con retroceso exponencial para manejar errores temporales.
+         * Función de utilidad para simular la generación de contenido (sin API).
+         * @param {string} interest El interés cultural del usuario.
+         * @returns {string} Una ruta predefinida en formato HTML.
          */
-        async function exponentialBackoffFetch(url, options) {
-            for (let i = 0; i < MAX_RETRIES; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        const errorBody = await response.json();
-                        // 429 Too Many Requests, retry
-                        if (response.status === 429 || response.status >= 500) {
-                            throw new Error(`HTTP error ${response.status}: ${JSON.stringify(errorBody)}`);
-                        }
-                        // Other client errors (4xx) should not be retried
-                        throw new Error(`API error ${response.status}: ${JSON.stringify(errorBody)}`);
-                    }
-                    return response;
-                } catch (error) {
-                    if (i === MAX_RETRIES - 1) {
-                        throw new Error("Fallo la conexión con la API después de múltiples reintentos. Verifica tu clave y límites de uso. Detalle: " + error.message);
-                    }
-                    // Wait before retrying
-                    const delay = RETRY_DELAY_MS * (2 ** i);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-        }
-        
-        /**
-         * Llama a la API de Gemini para generar contenido con grounding de Google Search.
-         * @param {string} userPrompt El texto de interés cultural del usuario.
-         * @returns {object} { text: string, sources: Array<{uri: string, title: string}> }
-         */
-        async function fetchGeminiRoute(userPrompt) {
-            // Se comprueba la clave solo si no estamos en el entorno Canvas.
-            if (!API_KEY && typeof __app_id === 'undefined') { 
-                throw new Error("Clave API de Gemini Faltante. Debes pegar tu clave en la variable 'API_KEY'.");
-            }
-            
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${API_KEY}`;
-            
-            const systemPrompt = "Actúa como un experto guía cultural e historiador colombiano. Genera una ruta de viaje de tres puntos clave (lugares, eventos o temas) basada en el interés del usuario. Usa un formato claro y conciso con encabezados Markdown y viñetas.";
-            
-            const payload = {
-                contents: [{ parts: [{ text: userPrompt }] }],
-                tools: [{ "google_search": {} }], // Activa la búsqueda en Google para información actualizada
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
+        function generateLocalRoute(interest) {
+            // Normalizar el interés para la simulación
+            const normalizedInterest = interest.toLowerCase().trim();
 
-            const response = await exponentialBackoffFetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let routeTitle = `Ruta Local: ${interest}`;
+            let routeContent = '';
+            let listItems = '';
 
-            const result = await response.json();
-            const candidate = result.candidates?.[0];
-
-            if (!candidate || !candidate.content?.parts?.[0]?.text) {
-                console.error("Respuesta de la API incompleta:", result);
-                throw new Error("La IA no pudo generar una ruta. Intenta con un prompt diferente.");
+            if (normalizedInterest.includes('café') || normalizedInterest.includes('eje cafetero')) {
+                routeTitle = "Ruta Cultural Local: Café y Paisaje Cultural Cafetero";
+                listItems = `
+                    <li>- Paseo por la Calle Real de Salento.</li>
+                    <li>- Degustación en la Finca El Ocaso o El Recuerdo.</li>
+                `;
+                routeContent = `
+                    <h4 class="text-2xl font-bold mt-4 mb-2">${routeTitle}</h4>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">1. Visita a Salento, Quindío</h5>
+                    <p>Explora el pintoresco pueblo de Salento, famoso por su arquitectura colorida y el acceso al <strong>Valle de Cocora</strong>. Ideal para entender la vida rural cafetera.</p>
+                    <ul class="list-disc ml-6 mt-2 mb-4">${listItems}</ul>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">2. Museo Nacional del Café, Montenegro</h5>
+                    <p>Ubicado cerca del Parque del Café, este museo ofrece un recorrido histórico completo desde la semilla hasta la taza, mostrando la importancia económica y social del grano.</p>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">3. Aguas Termales de Santa Rosa de Cabal</h5>
+                    <p>Una parada de relajación que combina el paisaje montañoso con las propiedades curativas del agua volcánica. Refleja la geografía única de la zona cafetera.</p>
+                `;
+            } else if (normalizedInterest.includes('cartagena') || normalizedInterest.includes('inquisición')) {
+                routeTitle = "Ruta Local: Legado Histórico de Cartagena";
+                listItems = `
+                    <li>- Recorrido sobre las murallas.</li>
+                    <li>- Visita a la Plaza de Bolívar.</li>
+                `;
+                routeContent = `
+                    <h4 class="text-2xl font-bold mt-4 mb-2">${routeTitle}</h4>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">1. Recorrido por la Ciudad Amurallada</h5>
+                    <p>Camina sobre las murallas y explora los baluartes, sintiendo la historia colonial. Visita la <strong>Torre del Reloj</strong>.</p>
+                    <ul class="list-disc ml-6 mt-2 mb-4">${listItems}</ul>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">2. Palacio de la Inquisición</h5>
+                    <p>Este museo es crucial para entender el papel de la Santa Inquisición en la Nueva Granada y la arquitectura colonial de la ciudad.</p>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">3. Convento de la Popa</h5>
+                    <p>Situado en el punto más alto, ofrece vistas panorámicas de la ciudad y el mar. Es un sitio religioso e histórico clave.</p>
+                `;
+            } else {
+                routeTitle = "Ruta Cultural Local: Folclore y Tradición Colombiana";
+                routeContent = `
+                    <h4 class="text-2xl font-bold mt-4 mb-2">${routeTitle}</h4>
+                    <p>Dado que tu interés ('${interest}') es muy amplio, te ofrecemos una ruta genérica de las tres regiones culturales más representativas:</p>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">1. La Costa: Cumbia y Carnaval</h5>
+                    <p>En Barranquilla, explora la historia del Carnaval, Patrimonio Inmaterial de la Humanidad. Es el epicentro del ritmo de la <strong>Cumbia</strong> y el arte popular.</p>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">2. La Región Andina: Museos y Oro</h5>
+                    <p>Visita el <strong>Museo del Oro en Bogotá</strong>. Esta parada es esencial para entender la riqueza precolombina y la cosmovisión indígena Muisca y Quimbaya.</p>
+                    <h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">3. El Pacífico: Marimba y Sabores Ancestrales</h5>
+                    <p>Conoce Buenaventura, donde la tradición afrocolombiana se manifiesta en la música de <strong>Marimba</strong> y platos a base de pescado y coco. Un tesoro sensorial.</p>
+                `;
             }
 
-            const text = candidate.content.parts[0].text;
-            let sources = [];
-            const groundingMetadata = candidate.groundingMetadata;
-            
-            if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                sources = groundingMetadata.groundingAttributions
-                    .map(attribution => ({
-                        uri: attribution.web?.uri,
-                        title: attribution.web?.title,
-                    }))
-                    .filter(source => source.uri && source.title); 
-            }
-
-            return { text, sources };
+            return routeContent;
         }
 
 
@@ -173,7 +137,7 @@
         // ==========================================================
 
         /**
-         * Maneja la generación de rutas culturales usando la API.
+         * Maneja la generación de rutas culturales usando la función local.
          */
         async function handleGenerateRoute() {
             const interestInput = document.getElementById('culturalInterest');
@@ -186,59 +150,35 @@
                 return;
             }
 
-            // Mostrar estado de carga
+            // Mostrar estado de carga simulada
             resultsDiv.innerHTML = `<div class="flex flex-col items-center justify-center space-y-3 text-primary font-semibold">
                                         <div class="loader"></div>
-                                        <span>Generando ruta cultural con el Guía IA...</span>
-                                        <span class="text-sm text-gray-500 font-normal">Esto puede tardar unos segundos.</span>
+                                        <span>Generando ruta cultural localmente...</span>
+                                        <span class="text-sm text-gray-500 font-normal">Simulando la respuesta de la IA (sin necesidad de API).</span>
                                     </div>`;
             generateButton.disabled = true;
             generateButton.classList.add('opacity-50', 'cursor-not-allowed');
 
+            // Simular un retraso para una mejor UX
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+
             try {
-                const { text, sources } = await fetchGeminiRoute(interest);
-
-                // 1. Formatear el texto de la IA para una mejor visualización (Markdown a HTML)
-                let formattedText = text
-                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Negritas
-                                    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Cursivas
-                                    .replace(/###\s*(.*)/g, '<h4 class="text-2xl font-bold mt-4 mb-2">$1</h4>') // H4 para el título de la ruta
-                                    .replace(/##\s*(.*)/g, '<h5 class="text-xl font-bold mt-3 mb-1 text-colombia-blue">$1</h5>') // H5 para subtítulos
-                                    .replace(/\n/g, '<br>'); // Saltos de línea
-
-                // 2. Construir la sección de citaciones
-                let citationsHtml = '';
-                if (sources.length > 0) {
-                    citationsHtml = '<div class="citation"><p class="font-semibold mb-1">Fuentes (Grounding):</p><ul>';
-                    sources.forEach((source, index) => {
-                        citationsHtml += `<li>[${index + 1}] <a href="${source.uri}" target="_blank">${source.title}</a></li>`;
-                    });
-                    citationsHtml += '</ul></div>';
-                }
+                // Llamada a la función local que simula la respuesta
+                const formattedText = generateLocalRoute(interest);
 
                 // 3. Mostrar el resultado final
-                resultsDiv.innerHTML = `<div class="p-4 bg-white rounded-lg shadow-inner border-2 border-colombia-yellow/50 text-gray-700">${formattedText}${citationsHtml}</div>`;
+                // Nota: No hay citaciones al ser una respuesta local codificada.
+                resultsDiv.innerHTML = `<div class="p-4 bg-white rounded-lg shadow-inner border-2 border-colombia-yellow/50 text-gray-700">${formattedText}</div>`;
                 
                 // 4. Desplazar la vista a los resultados
                 resultsDiv.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) {
-                // Mostrar error de la API o de la red
-                let errorMessage = error.message;
-
-                if (errorMessage.includes("API error 403")) {
-                    // Mensaje específico si la clave recién pegada sigue fallando
-                    errorMessage = `ERROR 403 (Permiso Denegado). La clave API insertada no está siendo reconocida por Gemini. 
-                                    Hemos ajustado el código para usar la clave automática del entorno. Intenta de nuevo.`;
-                } else if (errorMessage.includes("API error 400")) {
-                     // Mensaje específico para el error 400 que ya se ha corregido en el código
-                     errorMessage = `Error de Autenticación (400 - Clave Inválida). Ya hemos ajustado el código para usar la clave automática del entorno, intenta de nuevo. Si el error persiste, verifica que el modelo ${LLM_MODEL} esté habilitado.`;
-                }
-
+                // Manejo de errores de la lógica local
                 resultsDiv.innerHTML = `<div class="p-4 bg-white rounded-lg shadow-inner border-2 border-colombia-red/50 text-colombia-red font-semibold">
-                    <p>Error de Generación: ${errorMessage}</p>
+                    <p>Error en la generación local de la ruta: ${error.message}</p>
                 </div>`;
-                console.error("Error en handleGenerateRoute (API):", error);
+                console.error("Error en handleGenerateRoute (Local):", error);
             } finally {
                 generateRouteButton.disabled = false;
                 generateRouteButton.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -329,18 +269,15 @@
                 generateRouteButton.addEventListener('click', handleGenerateRoute);
             }
             
-            // Actualizar la etiqueta del modo en el hero (API Activa)
+            // Actualizar la etiqueta del modo en el hero (Potenciado con Gemini)
             const modeTag = document.getElementById('modeTag');
             if (modeTag) {
-                // 1. Definir el texto base 
-                const baseText = 'POTENCIADO POR GEMINI (GOOGLE)';
-                
-                // 2. Aplicar el nuevo texto
+                const baseText = 'POTENCIADO CON GEMINI'; // El nuevo texto
                 modeTag.textContent = baseText;
-                
-                // 3. Aplicar estilos estáticos (color BLANCO)
-                modeTag.classList.remove('font-light', 'text-colombia-yellow', 'text-colombia-red');
-                modeTag.classList.add('font-bold', 'text-white');
+                // Eliminar clases anteriores de 'MODO LOCAL'
+                modeTag.classList.remove('font-light', 'text-colombia-yellow', 'text-colombia-red', 'bg-colombia-red/80');
+                // Aplicar nuevas clases: Fondo azul profundo (primary) y texto amarillo (accent)
+                modeTag.classList.add('font-bold', 'text-colombia-yellow', 'bg-colombia-blue', 'px-4', 'py-2', 'rounded-full', 'shadow-xl'); 
             }
             
             // Inicializar el panel de enfoque
@@ -376,7 +313,7 @@
                 </h2>
                 <!-- Etiqueta de Modo Actualizada Dinámicamente con el nuevo texto -->
                 <p id="modeTag" class="text-xl sm:text-2xl mb-8 font-light max-w-3xl mx-auto">
-                    <!-- El JS inyectará "POTENCIADO POR GEMINI (GOOGLE)" en blanco -->
+                    <!-- El JS inyectará "POTENCIADO CON GEMINI" -->
                 </p>
                 <div class="space-x-4">
                     <a href="#ruta-ia" class="bg-colombia-yellow text-colombia-blue px-8 py-4 text-lg font-bold rounded-full hover:bg-white transition duration-300 shadow-2xl inline-block transform hover:scale-105">
@@ -442,10 +379,10 @@
         <section id="ruta-ia" class="py-16 sm:py-24 bg-primary text-white">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
-                    <span class="text-sm font-semibold uppercase text-colombia-yellow">FUNCIÓN ÚNICA | EXPLORACIÓN</span>
+                    <span class="text-sm font-semibold uppercase text-colombia-yellow">FUNCIÓN ÚNICA | EXPLORACIÓN (MODO LOCAL)</span>
                     <h3 class="text-4xl font-extrabold mt-2">Generador de Rutas Culturales Personalizadas</h3>
                     <p class="text-lg mt-4 max-w-2xl mx-auto">
-                        Introduce tu interés cultural. La IA generará una ruta de 3 puntos clave basada en información actualizada.
+                        Introduce tu interés cultural. La aplicación simulará la generación de una ruta local.
                     </p>
                 </div>
 
@@ -577,4 +514,3 @@
 
 </body>
 </html>
-
